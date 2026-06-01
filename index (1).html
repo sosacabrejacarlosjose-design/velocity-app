@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchMax PRO — Alto Rendimiento en Béisbol</title>
+    
+    <!-- Librerías de Gráficas e Iconos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-card: #151f32;
+            --bg-input: #1e293b;
+            --accent-blue: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top center, rgba(37, 99, 235, 0.18), transparent 18%),
+                        linear-gradient(180deg, #07111d 0%, #08111f 36%, #0b1225 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* Navbar / Header */
+        header {
+            background: linear-gradient(135deg, #1e40af, #2563eb);
+            padding: 22px;
+            text-align: center;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        header i {
+            color: #facc15;
+            animation: rotateBall 4s linear infinite;
+        }
+
+        @keyframes rotateBall {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 24px 20px 40px;
+        }
+
+        /* Sistema de Navegación por Pestañas */
+        .tab-navigation {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 28px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .tab-btn {
+            background: rgba(21, 31, 50, 0.92);
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 14px 10px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.28s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+            backdrop-filter: blur(6px);
+        }
+
+        .tab-btn i {
+            font-size: 20px;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background: var(--accent-blue);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tarjetas de Métricas Principal */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .metric-card {
+            background: linear-gradient(180deg, rgba(21,31,50,0.96), rgba(15,23,42,0.96));
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.2);
+            border-left: 5px solid var(--accent-blue);
+            position: relative;
+            overflow: hidden;
+            min-height: 150px;
+        }
+
+        .metric-card.weight-card {
+            border-left-color: #ec4899;
+        }
+
+        .metric-card.target-card {
+            border-left-color: var(--accent-green);
+        }
+
+        .metric-card h2 {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-card .value {
+            font-size: 38px;
+            font-weight: 800;
+            margin-top: 8px;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .metric-card .value span {
+            font-size: 16px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Bloques de Secciones Estándar */
+        .app-card {
+            background: linear-gradient(180deg, rgba(15,23,42,0.97), rgba(21,31,50,0.95));
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 26px;
+            border-radius: 26px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.18);
+            margin-bottom: 26px;
+            backdrop-filter: blur(5px);
+        }
+
+        .app-card h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Barra de Progreso Avanzada */
+        .progress-container {
+            background: rgba(36,50,77,0.9);
+            border-radius: 50px;
+            height: 24px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            margin-top: 12px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 70%; 
+            background: linear-gradient(90deg, #3b82f6, var(--accent-green));
+            border-radius: 50px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Formularios Estilizados */
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: var(--bg-input);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(37,99,235,0.2);
+        }
+
+        button {
+            width: 100%;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Contenedores de Gráficas */
+        .chart-wrapper {
+            background: linear-gradient(180deg, #152138 0%, #0f172a 100%);
+            padding: 18px;
+            border-radius: 22px;
+            margin-top: 14px;
+            min-height: 280px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+        }
+
+        /* Lista de Ejercicios y Días */
+        .workout-day-title {
+            background: linear-gradient(90deg, #1e293b, transparent);
+            padding: 10px 15px;
+            border-left: 4px solid var(--accent-blue);
+            margin: 25px 0 15px 0;
+            font-size: 18px;
+            border-radius: 0 10px 10px 0;
+            font-weight: bold;
+        }
+
+        .workout-day-title.pitch-alert {
+            border-left-color: var(--accent-red);
+            background: linear-gradient(90deg, #2d1921, transparent);
+        }
+
+        .exercise-item {
+            display: flex;
+            align-items: stretch;
+            background: rgba(19,28,46,0.96);
+            border-radius: 18px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        }
+
+        .exercise-item:hover {
+            transform: translateX(3px);
+            border-color: rgba(37, 99, 235, 0.24);
+            box-shadow: 0 18px 38px rgba(0,0,0,0.18);
+        }
+
+        /* Contenedor Visual de Alta Compatibilidad */
+        .exercise-img-box {
+            width: 150px;
+            min-width: 150px;
+            position: relative;
+            background: linear-gradient(180deg, rgba(37,99,235,0.12), #111827 90%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 14px;
+        }
+
+        .exercise-img-box img {
+            width: 100%;
+            height: auto;
+            max-height: 140px;
+            object-fit: contain;
+            display: block;
+            border-radius: 14px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+        }
+
+        /* Estilos para las breves animaciones de Gym con Emojis */
+        .gym-animation-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .gym-emoji-main {
+            font-size: 36px;
+        }
+
+        .gym-arrows {
+            font-size: 18px;
+            color: var(--accent-green);
+        }
+
+        /* Animaciones CSS controladas para los Emojis */
+        .anim-squat { animation: squatMove 2.5s infinite ease-in-out; }
+        .anim-deadlift { animation: deadliftMove 2.8s infinite ease-in-out; }
+        .anim-bench { animation: benchMove 2.2s infinite ease-in-out; }
+        .anim-pullup { animation: pullupMove 2.4s infinite ease-in-out; }
+        .anim-rotate { animation: rotateMove 1.8s infinite linear; }
+
+        @keyframes squatMove {
+            0%, 100% { transform: translateY(-8px); }
+            50% { transform: translateY(12px) scaleY(0.85); }
+        }
+        @keyframes deadliftMove {
+            0%, 100% { transform: translateY(10px) scale(0.9); }
+            50% { transform: translateY(-8px) scale(1.05); }
+        }
+        @keyframes benchMove {
+            0%, 100% { transform: translateY(12px); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pullupMove {
+            0%, 100% { transform: translateY(10px); }
+            50% { transform: translateY(-12px); }
+        }
+        @keyframes rotateMove {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .safety-badge {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+            margin-bottom: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            width: fit-content;
+        }
+
+        .fast-clip-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: var(--accent-red);
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+
+        .exercise-details {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .exercise-details h3 {
+            font-size: 16px;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .exercise-details p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .action-link {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: white;
+            padding: 8px 14px;
+            font-size: 12px;
+            border-radius: 12px;
+            width: fit-content;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+
+        .action-link:hover {
+            background: rgba(255,255,255,0.95);
+            color: #0f172a;
+            transform: translateY(-1px);
+        }
+
+        /* Modal para Instrucciones */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            position: relative;
+            text-align: center;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-instruction-text {
+            margin: 15px 0;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media(max-width: 600px) {
+            .tab-navigation {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .exercise-item {
+                flex-direction: column;
+            }
+            .exercise-img-box {
+                width: 100%;
+                height: 140px;
+            }
+            .form-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <i class="fa-solid fa-baseball-bat-ball"></i>
+        PitchMax PRO
+    </header>
+
+    <div class="container">
+        
+        <!-- Menú de Pestañas Nativas -->
+        <nav class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">
+                <i class="fa-solid fa-chart-line"></i> Progreso
+            </button>
+            <button class="tab-btn" onclick="switchTab('pley')">
+                <i class="fa-solid fa-baseball"></i> Pley / Brazo
+            </button>
+            <button class="tab-btn" onclick="switchTab('gym')">
+                <i class="fa-solid fa-dumbbell"></i> Gym / Masa
+            </button>
+            <button class="tab-btn" onclick="switchTab('calculator')">
+                <i class="fa-solid fa-calculator"></i> Bio-Métrica
+            </button>
+        </nav>
+
+        <!-- Bloque de Panel de Control (Dashboard) -->
+        <section id="dashboard" class="tab-content active">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h2>Velocidad Actual</h2>
+                    <div class="value" id="dash-vel">84 <span>MPH</span></div>
+                </div>
+                <div class="metric-card weight-card">
+                    <h2>Peso Corporal</h2>
+                    <div class="value" id="dash-weight">142 <span>LB</span></div>
+                </div>
+                <div class="metric-card target-card">
+                    <h2>Meta Scout</h2>
+                    <div class="value">90+ <span>MPH</span></div>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <h2><i class="fa-solid fa-bullseye" style="color:#ef4444;"></i> Ruta Hacia las 90 MPH</h2>
+                <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">Tu progreso se evalúa en base a la meta óptima inicial.</p>
+                <div class="progress-container">
+                    <div class="progress-bar" id="main-progress-bar">70%</div>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <h2><i class="fa-solid fa-pen-to-square" style="color:var(--accent-blue);"></i> Registrar Nuevo Récord</h2>
+                <div class="form-group">
+                    <div>
+                        <label>Velocidad en Radar (MPH)</label>
+                        <input type="number" id="input-velocity" placeholder="Ej. 85">
+                    </div>
+                    <div>
+                        <label>Peso en Báscula (LB)</label>
+                        <input type="number" id="input-weight" placeholder="Ej. 145">
+                    </div>
+                </div>
+                <button onclick="updateUserMetrics()"><i class="fa-solid fa-floppy-disk"></i> Guardar e Indexar Datos</button>
+            </div>
+
+            <div class="app-card">
+                <h2><i class="fa-solid fa-chart-area" style="color:var(--accent-green);"></i> Historial de Lanzamiento (Radar Tracker)</h2>
+                <div class="chart-wrapper">
+                    <canvas id="velocityChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pestaña Béisbol y Lanzamientos (Pley / Brazo) -->
+        <section id="pley" class="tab-content">
+            <div class="app-card">
+                <h2><i class="fa-solid fa-bullhorn" style="color:#facc15;"></i> Programa de Cuidado e Incremento de Millas</h2>
+                <p style="color: var(--text-muted); font-size:14px;">Rutina específica para ligamentos, flexibilidad dinámica y liberación de potencia muscular.</p>
+
+                <div class="workout-day-title">Lunes — Pley + Lanzar Profundo</div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">LIVE LOOP</span>
+                        <img src="img_1903.jpg" alt="Long Toss Baseball">
+                        
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Long Toss (Estiramiento Dinámico)</h3>
+                        <p>10-15 Minutos en progresión de distancia para elongar fibras musculares.</p>
+                        <button class="action-link" onclick="openInstruction('Long Toss', 'Comienza a lanzar corto a 30 pies y ve retrocediendo cada 5 lanzamientos hasta alcanzar tu rango máximo de extensión con arcos altos. Regresa lanzando en línea recta.')">Técnica Profesional</button>
+                    </div>
+                </div>
+
+                <div class="workout-day-title pitch-alert">Miércoles — Pley + Bullpen (Día de Lanzamiento) ⚾</div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">LIVE LOOP</span>
+                        <img src="maxresdefault.jpg" alt="Bullpen Pitching">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Bullpen Controlled e Intensidad</h3>
+                        <p>30-35 Pitcheos: Enfócate en el comando de tu recta y consistencia del punto de soltado (Release Point).</p>
+                        <button class="action-link" onclick="openInstruction('Bullpen Controlado', 'Realiza 15 Rectas, 10 Cambios y 10 Rompientes. No busques tirar al 100% de fuerza, busca perfeccionar el ángulo de caída de los pitcheos.')">Plan de Pitcheo</button>
+                    </div>
+                </div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">LIVE LOOP</span>
+                        <img src="IMG_9808_800x.webp" alt="Resistance Bands">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Band Work (Post-Lanzamiento)</h3>
+                        <p>Rutina obligatoria de ligas ligeras para enfriar y proteger el manguito rotador tras el Bullpen.</p>
+                        <button class="action-link" onclick="openInstruction('Band Work', 'Realiza 3 series de 15 repeticiones de rotación interna y externa. Esto bombea sangre limpia al hombro para acelerar la recuperación celular.')">Rutina Jobe</button>
+                    </div>
+                </div>
+
+                <div class="workout-day-title pitch-alert">Viernes — Pley + Velocity Day 🔥</div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">LIVE LOOP</span>
+                        <img src="httpbarrettstover-comcategorybaseball.webp" alt="Power Training">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Pulldowns / Crow-Hops (Máxima Potencia)</h3>
+                        <p>5 a 7 lanzamientos en línea recta usando el paso 'tras-bola' para transferir la inercia de las piernas.</p>
+                        <button class="action-link" onclick="openInstruction('Pulldowns', 'Toma vuelo desde atrás y suelta la bola con violencia hacia tu partner a una distancia media. Aquí es donde se le enseña al sistema nervioso a romper el radar.')">Romper Radar</button>
+                    </div>
+                </div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">LIVE LOOP</span>
+                        <img src="funcionamiento-de-javier-colina-baserunner-del-béisbol-20495633.webp" alt="Sprint Training">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Sprints de Piernas (Gasser Runs)</h3>
+                        <p>8 Sprints explosivos de 60 metros. Todo pitcher liga mayorista corre para mantener sus piernas veloces.</p>
+                        <button class="action-link" onclick="openInstruction('Sprints', 'Descansa 1 minuto entre cada sprint. La potencia de tu brazo nace directamente de la explosividad zancada de tus piernas.')">Velocidad Piernas</button>
+                    </div>
+                </div>
+
+                <div class="workout-day-title">Domingo — Descanso y Movilidad</div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">LIVE LOOP</span>
+                        <img src="post-throw_1_07569293-22fa-4f95-a26a-814495ef09d6.webp" alt="Active Recovery Stretching">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Active Recovery</h3>
+                        <p>Estiramientos estáticos de cadera, piernas y descarga total del brazo de lanzar.</p>
+                        <button class="action-link" onclick="openInstruction('Recovery', 'Dedica 20 minutos a estirar tus piernas, foam roller en la espalda y descanso total. Sin descanso no hay hipertrofia ni subida de milla.')">Ver Consejos</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pestaña Hipertrofia y Gimnasio (Gym / Masa) -->
+        <section id="gym" class="tab-content">
+            <div class="app-card">
+                <h2><i class="fa-solid fa-dumbbell" style="color:var(--accent-blue);"></i> Entrenamiento de Fuerza Explosiva y Masa Muscular</h2>
+                <p style="color: var(--text-muted); font-size:14px; margin-bottom:15px;">Diseñado para aumentar masa muscular útil, reforzando las áreas críticas que transfieren energía balística (Piernas, Core y Espalda).</p>
+
+                <div class="workout-day-title">Martes — Tren Inferior Explosivo (Base de la Milla)</div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">TÉCNICA</span>
+                        <img src="scuattt.jpg" alt="press">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Back Squat (Sentadillas Pesadas) — 4 Sets x 6 Reps</h3>
+                        <div class="safety-badge"><i class="fa-solid fa-triangle-exclamation"></i> Espalda recta y talones fijos</div>
+                        <p>Baja controlando el peso hasta romper el paralelo y sube con máxima violencia explosiva.</p>
+                        <button class="action-link" onclick="openInstruction('Back Squat', 'Mantén el core rígido, saca el pecho y empuja los talones contra el piso. No dejes que las rodillas colapsen hacia adentro.')">Ver Consejos</button>
+                    </div>
+                </div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">TÉCNICA</span>
+                        <img src="peso muerto.avif" alt="peso">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Deadlift (Peso Muerto) — 4 Sets x 5 Reps</h3>
+                        <div class="safety-badge"><i class="fa-solid fa-triangle-exclamation"></i> Jamás encorves la columna</div>
+                        <p>Construye la cadena posterior de tus piernas y espalda para el empuje en la lomita.</p>
+                        <button class="action-link" onclick="openInstruction('Peso Muerto', 'Sube la barra pegada a tus espinillas, bloqueando con los glúteos arriba. Jamás encorves la espalda baja.')">Ver Consejos</button>
+                    </div>
+                </div>
+
+                <div class="workout-day-title">Jueves — Upper Body Estabilizador</div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">TÉCNICA</span>
+                        <img src="press.webp" alt="press">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Bench Press Plano — 4 Sets x 8 Reps</h3>
+                        <div class="safety-badge"><i class="fa-solid fa-triangle-exclamation"></i> Hombros firmes pegados al banco</div>
+                        <p>Desarrolla fuerza de empuje en los pectorales y los deltoides anteriores.</p>
+                        <button class="action-link" onclick="openInstruction('Bench Press', 'Retrae las escápulas en el banco antes de sacar la barra. Baja tocando ligeramente el pecho bajo.')">Ver Consejos</button>
+                    </div>
+                </div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">TÉCNICA</span>
+                        <img src="pullups.jpg" alt="pulluups">
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Dominadas estrictas (Pull Ups) — 4 Sets al Fallo</h3>
+                        <div class="safety-badge"><i class="fa-solid fa-triangle-exclamation"></i> Controla la bajada sin colgarte suelto</div>
+                        <p>La espalda es el freno del brazo. Una espalda fuerte evita lesiones y sostiene la milla.</p>
+                        <button class="action-link" onclick="openInstruction('Pull Ups', 'Cuelga completamente extendido y tracciona usando los dorsales hasta pasar la barbilla. Controla la bajada.')">Ver Consejos</button>
+                    </div>
+                </div>
+
+                <div class="workout-day-title">Sábado — Potencia Rotacional e Hipertrofia</div>
+                <div class="exercise-item">
+                    <div class="exercise-img-box">
+                        <span class="fast-clip-badge">TÉCNICA</span>
+                        <div class="gym-animation-container">
+                            <span class="gym-arrows">🔄</span>
+                            <span class="gym-emoji-main anim-rotate">🥎</span>
+                        </div>
+                    </div>
+                    <div class="exercise-details">
+                        <h3>Lanzamiento de Balón Medicinal — 4 Sets x 8 Reps</h3>
+                        <div class="safety-badge"><i class="fa-solid fa-triangle-exclamation"></i> Fuerza desde la cadera, no del brazo</div>
+                        <p>Transfiere la fuerza muscular del gym en velocidad de rotación pura (Simulación de pitcheo).</p>
+                        <button class="action-link" onclick="openInstruction('Balón Medicinal', 'Párate de lado frente a una pared sólida, carga la cadera trasera y suelta el balón rotando el torso de forma explosiva.')">Ver Consejos</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calculadora Bio-Métrica -->
+        <section id="calculator" class="tab-content">
+            <div class="app-card">
+                <h2><i class="fa-solid fa-calculator" style="color:var(--accent-green)"></i> Calculadora de Masa e Índice Corporal</h2>
+                <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px;">Para lanzar duro necesitas masa muscular densa. Calcula tu estado de masa actual de manera matemática.</p>
+                
+                <div style="margin-bottom:15px;">
+                    <label>Estatura actual (en centímetros - Ej. 175)</label>
+                    <input type="number" id="calc-height" placeholder="Ej. 178">
+                </div>
+                <div style="margin-bottom:15px;">
+                    <label>Peso actual (en Libras)</label>
+                    <input type="number" id="calc-weight-lb" placeholder="Ej. 142">
+                </div>
+                <button onclick="calculateFitness()"><i class="fa-solid fa-wand-magic-sparkles"></i> Analizar Composición Corporal</button>
+
+                <div id="calc-result" style="margin-top:20px; padding:15px; background: #0f172a; border-radius:12px; display:none;"></div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Modal Global Moderno -->
+    <div class="modal" id="instructionModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeInstruction()">&times;</span>
+            <h2 id="modalTitle" style="color: var(--accent-blue);">Instrucción de Ejercicio</h2>
+            <p class="modal-instruction-text" id="modalText">Cargando...</p>
+            <button onclick="closeInstruction()" style="padding:10px; font-size:14px;">Entendido, Coach</button>
+        </div>
+    </div>
+
+    <footer>
+        PitchMax PRO © 2026 | Sistema de Desarrollo de Prospectos Digitales | Carlos Sosa
+    </footer>
+
+    <script>
+        // Variables globales de control
+        let currentVelocity = 84;
+        let currentWeight = 142;
+        const targetVelocity = 90;
+
+        // Inicialización de la gráfica Chart.js
+        const ctx = document.getElementById('velocityChart').getContext('2d');
+        const velocityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                datasets: [{
+                    label: 'Velocidad de Salida (MPH)',
+                    data: [81, 82, 83, 84],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#facc15',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#ffffff' } } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // Lógica de cambio de pestañas (Tabs)
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Actualización dinámica de métricas
+        function updateUserMetrics() {
+            const velInput = document.getElementById('input-velocity').value;
+            const weightInput = document.getElementById('input-weight').value;
+
+            if(velInput) {
+                currentVelocity = parseInt(velInput);
+                document.getElementById('dash-vel').innerHTML = `${currentVelocity} <span>MPH</span>`;
+                
+                const nextWeekNumber = velocityChart.data.labels.length + 1;
+                velocityChart.data.labels.push(`Semana ${nextWeekNumber}`);
+                velocityChart.data.datasets[0].data.push(currentVelocity);
+                velocityChart.update();
+
+                let progressPercent = Math.round(((currentVelocity - 60) / (targetVelocity - 60)) * 100);
+                if (progressPercent > 100) progressPercent = 100;
+                if (progressPercent < 0) progressPercent = 0;
+                
+                const pb = document.getElementById('main-progress-bar');
+                pb.style.width = `${progressPercent}%`;
+                pb.innerText = `${progressPercent}%`;
+            }
+
+            if(weightInput) {
+                currentWeight = parseInt(weightInput);
+                document.getElementById('dash-weight').innerHTML = `${currentWeight} <span>LB</span>`;
+            }
+
+            document.getElementById('input-velocity').value = '';
+            document.getElementById('input-weight').value = '';
+        }
+
+        // Modales de instrucción
+        function openInstruction(title, text) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalText').innerText = text;
+            document.getElementById('instructionModal').style.display = 'flex';
+        }
+
+        function closeInstruction() {
+            document.getElementById('instructionModal').style.display = 'none';
+        }
+
+        // Calculadora Bio-Métrica
+        function calculateFitness() {
+            const height = parseFloat(document.getElementById('calc-height').value);
+            const weightLb = parseFloat(document.getElementById('calc-weight-lb').value);
+            const resultDiv = document.getElementById('calc-result');
+
+            if (!height || !weightLb) {
+                alert('Por favor ingresa valores válidos.');
+                return;
+            }
+
+            const weightKg = weightLb * 0.453592;
+            const heightMers = height / 100;
+            const imc = (weightKg / (heightMers * heightMers)).toFixed(1);
+
+            let status = "";
+            let advice = "";
+
+            if (imc < 18.5) {
+                status = "Bajo peso para un Atleta";
+                advice = "¡Urgente! Necesitas un superávit calórico. Para subir tus millas en la loma necesitas masa muscular que transfiera fuerza.";
+            } else if (imc >= 18.5 && imc <= 24.9) {
+                status = "Composición Óptima / Atlético";
+                advice = "Buen balance. Concéntrate en convertir esa masa en fuerza explosiva y mantener tu flexibilidad funcional.";
+            } else {
+                status = "Masa Elevada";
+                advice = "Asegúrate de que este peso sea de masa magra (músculo) y no grasa corporal, para no restar velocidad de rotación a tus caderas.";
+            }
+
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML = `
+                <h3 style="color: var(--accent-green); margin-bottom: 8px;">Análisis Finalizado:</h3>
+                <p><strong>Tu IMC estimado:</strong> ${imc}</p>
+                <p><strong>Estado:</strong> ${status}</p>
+                <p style="font-size: 14px; margin-top: 8px; color: var(--text-muted);">${advice}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
